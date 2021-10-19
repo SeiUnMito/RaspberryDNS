@@ -5,6 +5,9 @@ import shutil
 
 class RaspberryDNS:
 	def __init__(self):
+		if os.name=="nt":
+			print("This program does not work on Microsoft Windows.\nPlease run this on the GNU/Linux System.")
+			exit()
 		self.home=os.path.expanduser("~")+"/"
 		permission=os.getuid()
 		if permission!=0:
@@ -14,8 +17,8 @@ class RaspberryDNS:
 			print("Root check verified. continue to the section.")
 	def installDependencies(self):
 		system("sudo apt -y install dnsmasq")
-		print("If you failed to install software. Please install dnsmasq manually.")
-		print("Some of the distribution is not shipped with bind or unavailable repository.")
+		print("If you failed to install software, please install dnsmasq manually.")
+		print("Some of the distribution is not shipped with or unavailable repository.")
 		print("If failed to install, Please check your distribution's package lists.")
 	
 	def backupConf(self):
@@ -29,9 +32,9 @@ class RaspberryDNS:
 				print("It seems like this is original one.\nCreating back up")
 				try:
 					shutil.copy("/etc/dnsmasq.conf","/etc/dnsmasq.conf.bak")
-					print("Backed up successfly.")
+					print("Backed up successfully.")
 				except:
-					print("Failed to create an backup. Please run this program with appropirate previllage.")
+					print("Failed to create an backup. Please run this program with appropriate privilege.")
 
 	def getHosts(self,path):
 		with open(path,"r") as f:
@@ -55,24 +58,25 @@ class RaspberryDNS:
 			try:
 				with open("/etc/dnsmasq.conf","w") as f:
 					f.write("#RaspberryDNS#\n")
-					f.write("# You can restore original configuration at any time. The original one had stored at /etc/dnsmasq.conf.bak ")
-					f.write("# This will send DNS queri to the main DNS server only for domain name.\n")
+					f.write("# You can restore original configuration at any time. The original one has been stored at /etc/dnsmasq.conf.bak ")
+					f.write("# This will send DNS query to the main DNS server only for domain name.\n")
 					f.write("domain-needed\n")
-					f.write("# If IP is local one, do not send DNS queri to the main DNS server\n")
+					f.write("# If IP is local one, it will not send DNS query to the main DNS server\n")
 					f.write("bogus-priv\n")
 					f.write("# This will be useful later to add a fake domain name to your local devices.\n")
 					f.write("expand-hosts\n")
 					f.write("# This is your domain name. You can change  whatever you want\n")
 					f.write("domain="+domainName)
-					print("Settled prefered config. Please configure a local host.")
+					print("Settled preferred config. Please configure a local host.")
 			except:
-				print("Failed to write lines. Please check you have appropirate permissions.")
+				print("Failed to write lines. Please check you have appropriate permissions.")
 	def restore(self):
 		try:
 			print("Overwriting existing config and restoreing default...")
 			shutil.copy("/etc/dnsmasq.conf.bak","/etc/dnsmasq.conf")
+			print("Configuration has been restored.")
 		except:
-			print("Failed to restore configuration. Please consider to check you have appropirate permission.")
+			print("Failed to restore configuration. Please consider to check you have appropriate permission.")
 	
 	def reinstall(self):
 		system("sudo apt -y purge dnsmasq")	
@@ -93,23 +97,24 @@ class RaspberryDNS:
 				if len(data) > c:
 					print(data[c])
 				c+=1
-			print("**** Reinstallation Successfly done ****")
+			print("**** Re installation Successfully done ****")
 		else:
-			print("Unfortunately, default configuration had not been restored...\n Please install dnsmasq manually or check your distribution's default package.")
+			print("Unfortunately, default configuration could not restored...\n Please install dnsmasq manually or check your distribution's default package.")
 
 RaspberryDNS=RaspberryDNS()
 
 if __name__=="__main__":
 	print("RaspberryDNS: Easy DNS Builder for home users")
-	print("* It must be used in your home, not organization! *\n")
+	print("* Please  use this software for small scale networking, not for bigger one! *\n")
 	yes=["y","yes"]
 	no=["no","n"]
 	prefer=input("Is this your first time to setup? [Y/n] >>> ")
 	if prefer.lower() in yes:
+		RaspberryDNS.installDependencies()
 		RaspberryDNS.backupConf()
-		rasp=input("If you do not know about DNS server so much, RaspberryDNS could make a basic configuration for just work.\nWould you like to use preferred configuration? [Y/n] >>> ")
+		rasp=input("If you do not know about DNS server so much, RaspberryDNS can make a very basic configuration for just work.\nWould you like to use preferred configuration? [Y/n] >>> ")
 		if rasp.lower() in yes:
-			name=input("What domain name would you like to use? >>> ")
+			name=input("What domain name would you like to use? (For example, you can use example.com or local.rasp) >>> ")
 			RaspberryDNS.setPrefer(name)
 	else:
 		funcList=["Try to install dependencies","Restore default configuration","Set preferred configuration","Manage hosts","Hanged up and I do not know what to do..."]
@@ -123,7 +128,7 @@ if __name__=="__main__":
 		elif wtd=="1":
 			RaspberryDNS.restore()
 		elif wtd=="2":
-			name=input("What domain name would you like to use? >>> ")
+			name=input("What domain name would you like to use? (For example, you can use example.com or local.rasp) >>> ")
 			RaspberryDNS.setPrefer(name)
 		elif wtd=="3":
 			print("Now you can edit your hosts table. Type dl:(number) to delete entry from table or type ip __ name to add an entry to the table. You can quit as #")
@@ -148,7 +153,7 @@ if __name__=="__main__":
 					print("Quit manage mode.")
 					if origin!=hosts:
 						save=input("The configuration has been changed. Are you sure you save the buffer? [Y/n] >>> ")
-						if save in yes:
+						if save.lower() in yes:
 							try:
 								with open ("/etc/hosts","w")  as f:
 									for a in hosts:
@@ -162,8 +167,10 @@ if __name__=="__main__":
 				else:
 					hosts.append(wtd)
 		elif wtd=="4":
-			reins=input("Stay calm. Maybe you can restore your default configuration by reinstalling dnsmasq package.\nChould I reinstall the dnsmasq right now? [Y/n] >>> ")
+			reins=input("Stay calm. Maybe you can restore your default configuration by reinstalling dnsmasq package.\nMay I reinstall the dnsmasq package right now? [Y/n] >>> ")
 			if reins.lower() in yes:
 				RaspberryDNS.reinstall()
+			else:
+				print("Ok. You can re-install dnsmasq with sudo apt purge dmsmasq && sudo apt install dnsmasq")
 				
 
